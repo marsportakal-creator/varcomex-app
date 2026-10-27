@@ -1,0 +1,152 @@
+/* Varcomex İklim - mobil öncelikli, açık / koyu tema */
+:root {
+  --zemin: #eef1f6;
+  --kart: #ffffff;
+  --yazi: #14192a;
+  --soluk: #5d6478;
+  --cizgi: #d9dee8;
+  --vurgu: #1f5fd6;
+  --vurgu-yazi: #ffffff;
+  --isitiyor: #e65014;        /* termostat TFT: RGB 230,80,20 */
+  --isitiyor-koyu: #b8380a;
+  --sogutuyor: #0046c8;       /* klima kiti TFT: RGB 0,70,200 */
+  --sogutuyor-koyu: #00309a;
+  --iyi: #1f9d55;
+  --kotu: #d23b3b;
+  --bekle: #c98a00;
+  --uyari-zemin: #fff4d6;
+  --uyari-yazi: #6b4a00;
+  --golge: 0 1px 3px rgba(20, 25, 42, .08), 0 6px 18px rgba(20, 25, 42, .06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="acik"]) {
+    --zemin: #0b0f1a;
+    --kart: #161c2b;
+    --yazi: #e8ecf5;
+    --soluk: #9aa3b8;
+    --cizgi: #2a3247;
+    --vurgu: #5b8ef0;
+    --uyari-zemin: #3a2f10;
+    --uyari-yazi: #ffd98a;
+    --golge: none;
+    color-scheme: dark;
+  }
+}
+:root[data-tema="koyu"] {
+  --zemin: #0b0f1a;
+  --kart: #161c2b;
+  --yazi: #e8ecf5;
+  --soluk: #9aa3b8;
+  --cizgi: #2a3247;
+  --vurgu: #5b8ef0;
+  --uyari-zemin: #3a2f10;
+  --uyari-yazi: #ffd98a;
+  --golge: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* .kart-icerik { display: grid } hidden'i ezmesin */
+html, body { margin: 0; }
+body {
+  background: var(--zemin);
+  color: var(--yazi);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom));
+  max-width: 560px;
+  margin: 0 auto;
+  -webkit-tap-highlight-color: transparent;
+}
+h1 { font-size: 1.25rem; margin: 0; }
+h2 { font-size: 1.1rem; margin: 0; }
+.kucuk { font-size: .85rem; color: var(--soluk); }
+
+/* ---------- üst çubuk ---------- */
+.ust { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0 10px; }
+.durum-satiri { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .9rem; color: var(--soluk); margin-top: 2px; }
+.ayrac { opacity: .6; }
+.nokta { width: 10px; height: 10px; border-radius: 50%; background: var(--bekle); display: inline-block; }
+.nokta.cevrimici { background: var(--iyi); }
+.nokta.cevrimdisi { background: var(--kotu); }
+.ikon-dugme {
+  border: 1px solid var(--cizgi); background: var(--kart); color: var(--yazi);
+  width: 44px; height: 44px; border-radius: 12px; font-size: 1.3rem; cursor: pointer;
+}
+
+.uyari {
+  background: var(--uyari-zemin); color: var(--uyari-yazi);
+  border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; font-size: .95rem;
+}
+
+/* ---------- kartlar ---------- */
+main { display: grid; gap: 14px; }
+.kart {
+  background: var(--kart); border: 1px solid var(--cizgi); border-radius: 18px;
+  padding: 16px; box-shadow: var(--golge); transition: background .3s, color .3s;
+}
+.kart-ust { display: flex; align-items: center; justify-content: space-between; }
+.rozet {
+  font-size: .8rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px; background: var(--zemin); color: var(--soluk);
+}
+.kart-icerik { display: grid; gap: 14px; margin-top: 8px; }
+.oda { text-align: center; }
+.oda-deger { font-size: 4rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.oda-birim { font-size: 1.5rem; font-weight: 600; color: var(--soluk); margin-left: 2px; vertical-align: top; }
+.hedef-satir { display: grid; grid-template-columns: 64px 1fr 64px; align-items: center; gap: 8px; }
+.hedef { text-align: center; }
+.hedef-deger { font-size: 2.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.derece { font-weight: 600; }
+.yuvarlak {
+  width: 64px; height: 64px; border-radius: 50%; border: 1px solid var(--cizgi);
+  background: var(--zemin); color: var(--yazi); font-size: 2rem; line-height: 1; cursor: pointer;
+}
+.ana-dugme {
+  width: 100%; min-height: 52px; border: 0; border-radius: 14px; cursor: pointer;
+  background: var(--vurgu); color: var(--vurgu-yazi); font-size: 1.05rem; font-weight: 600;
+}
+.ana-dugme.kapat { background: transparent; color: var(--yazi); border: 1px solid var(--cizgi); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.gonderiliyor { opacity: .7; cursor: progress; }
+.ipucu { text-align: center; }
+.bos-mesaj { padding: 26px 8px; text-align: center; color: var(--soluk); font-weight: 600; }
+
+/* ısıtıyor: termostat TFT'si gibi turuncu-kırmızı */
+.kart.isitiyor { background: var(--isitiyor); border-color: var(--isitiyor-koyu); color: #fff; }
+.kart.sogutuyor { background: var(--sogutuyor); border-color: var(--sogutuyor-koyu); color: #fff; }
+.kart.isitiyor .kucuk, .kart.sogutuyor .kucuk,
+.kart.isitiyor .oda-birim, .kart.sogutuyor .oda-birim { color: rgba(255, 255, 255, .8); }
+.kart.isitiyor .rozet, .kart.sogutuyor .rozet { background: rgba(0, 0, 0, .2); color: #fff; }
+.kart.isitiyor .yuvarlak, .kart.sogutuyor .yuvarlak { background: rgba(255, 255, 255, .15); border-color: rgba(255, 255, 255, .35); color: #fff; }
+.kart.isitiyor .ana-dugme, .kart.sogutuyor .ana-dugme { background: #fff; color: #14192a; border: 0; }
+
+.pil {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px;
+  font-size: .9rem; color: var(--soluk); padding: 4px 4px 0;
+}
+.pil strong { color: var(--yazi); }
+.pil .dusuk { color: var(--kotu); }
+
+/* ---------- ayarlar ---------- */
+dialog {
+  border: 1px solid var(--cizgi); border-radius: 18px; padding: 20px;
+  background: var(--kart); color: var(--yazi); width: min(92vw, 440px);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .5); }
+#ayarForm { display: grid; gap: 12px; }
+#ayarForm p { margin: 0; }
+label { display: grid; gap: 6px; font-size: .9rem; color: var(--soluk); }
+input, select {
+  font: inherit; color: var(--yazi); background: var(--zemin);
+  border: 1px solid var(--cizgi); border-radius: 10px; padding: 10px 12px; min-height: 44px; width: 100%;
+}
+.dugmeler { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+.dugmeler button {
+  min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0; cursor: pointer;
+  background: var(--vurgu); color: var(--vurgu-yazi); font: inherit; font-weight: 600;
+}
+.dugmeler .ikincil { background: transparent; color: var(--yazi); border: 1px solid var(--cizgi); }
+.hata { color: var(--kotu); }
+
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--vurgu); outline-offset: 2px; }

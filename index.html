@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Varcomex İklim</title>
+  <meta name="description" content="Varcomex iklim kontrolü: kombi ve klimayı uzaktan izle ve yönet">
+  <meta name="theme-color" content="#0b1d4a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="İklim">
+  <link rel="stylesheet" href="style.css">
+  <!-- MQTT.js (tarayıcı sürümü, sabit sürüm). Service worker bunu önbelleğe almaz. -->
+  <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="ust">
+    <div class="baslik">
+      <h1>Varcomex İklim</h1>
+      <div class="durum-satiri">
+        <span id="beyinNokta" class="nokta" aria-hidden="true"></span>
+        <span id="beyinYazi">Bağlanıyor…</span>
+        <span class="ayrac" aria-hidden="true">·</span>
+        <span id="sonGuncelleme">henüz veri yok</span>
+      </div>
+    </div>
+    <button id="ayarAc" class="ikon-dugme" type="button" aria-label="Ayarlar" title="Ayarlar">⚙</button>
+  </header>
+
+  <div id="uyari" class="uyari" role="status" aria-live="polite" hidden></div>
+
+  <main id="ana">
+    <!-- KOMBI -->
+    <section class="kart" id="kombiKart" aria-labelledby="kombiBaslik">
+      <div class="kart-ust">
+        <h2 id="kombiBaslik">Kombi</h2>
+        <span class="rozet" id="kombiDurum">—</span>
+      </div>
+      <div class="kart-icerik" id="kombiIcerik">
+        <div class="oda">
+          <span class="oda-deger" id="kombiOda">--</span><span class="oda-birim">°C</span>
+          <div class="kucuk" id="kombiNem">nem --</div>
+        </div>
+        <div class="hedef-satir">
+          <button class="yuvarlak" type="button" id="kombiEksi" aria-label="Kombi hedefini düşür">−</button>
+          <div class="hedef">
+            <div class="kucuk">hedef</div>
+            <div class="hedef-deger"><span id="kombiHedef">--</span><span class="derece">°</span></div>
+          </div>
+          <button class="yuvarlak" type="button" id="kombiArti" aria-label="Kombi hedefini yükselt">+</button>
+        </div>
+        <button class="ana-dugme" type="button" id="kombiAcKapat">—</button>
+      </div>
+    </section>
+
+    <!-- KLIMA -->
+    <section class="kart" id="klimaKart" aria-labelledby="klimaBaslik">
+      <div class="kart-ust">
+        <h2 id="klimaBaslik">Klima</h2>
+        <span class="rozet" id="klimaDurum">—</span>
+      </div>
+      <div class="bos-mesaj" id="klimaYok" hidden>Klima kiti bağlı değil</div>
+      <div class="kart-icerik" id="klimaIcerik">
+        <div class="oda">
+          <span class="oda-deger" id="klimaOda">--</span><span class="oda-birim">°C</span>
+          <div class="kucuk">kitin sensörü</div>
+        </div>
+        <div class="hedef-satir">
+          <button class="yuvarlak" type="button" id="klimaEksi" aria-label="Klima hedefini düşür">−</button>
+          <div class="hedef">
+            <div class="kucuk">hedef</div>
+            <div class="hedef-deger"><span id="klimaHedef">--</span><span class="derece">°</span></div>
+          </div>
+          <button class="yuvarlak" type="button" id="klimaArti" aria-label="Klima hedefini yükselt">+</button>
+        </div>
+        <div class="kucuk ipucu" id="klimaIpucu" hidden>Hedef yalnızca klima açıkken değişir</div>
+        <button class="ana-dugme" type="button" id="klimaAcKapat">—</button>
+      </div>
+    </section>
+
+    <section class="pil" aria-label="Pil seviyeleri">
+      <div>Ana ünite pili: <strong id="pilBeyin">--</strong></div>
+      <div>Termostat pili: <strong id="pilTermostat">--</strong></div>
+    </section>
+  </main>
+
+  <!-- AYARLAR -->
+  <dialog id="ayarlar" aria-labelledby="ayarBaslik">
+    <form id="ayarForm" method="dialog">
+      <h2 id="ayarBaslik">Bağlantı ayarları</h2>
+      <p class="kucuk">Bilgiler yalnızca bu telefonda (tarayıcı deposunda) saklanır.</p>
+      <label>Sunucu (WebSocket TLS)
+        <input id="aSunucu" type="url" required autocomplete="off" spellcheck="false">
+      </label>
+      <label>Kullanıcı adı
+        <input id="aKullanici" type="text" required autocomplete="username" autocapitalize="off" spellcheck="false">
+      </label>
+      <label>Şifre
+        <input id="aSifre" type="password" required autocomplete="current-password">
+      </label>
+      <label>Cihaz kimliği (12 karakter, beyin logunda)
+        <input id="aCihaz" type="text" required pattern="[0-9a-fA-F]{12}" maxlength="12" autocapitalize="off" spellcheck="false">
+      </label>
+      <label>Tema
+        <select id="aTema">
+          <option value="sistem">Sistem</option>
+          <option value="acik">Açık</option>
+          <option value="koyu">Koyu</option>
+        </select>
+      </label>
+      <p class="kucuk hata" id="ayarHata" hidden></p>
+      <div class="dugmeler">
+        <button type="button" id="ayarIptal" class="ikincil">Vazgeç</button>
+        <button type="submit" id="ayarKaydet">Kaydet ve bağlan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <noscript>Bu uygulama JavaScript gerektirir.</noscript>
+</body>
+</html>
