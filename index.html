@@ -68,7 +68,12 @@
           <span class="oda-deger" id="klimaOda">--</span><span class="oda-birim">°C</span>
           <div class="kucuk">kitin sensörü</div>
         </div>
-        <div class="hedef-satir">
+        <div class="mod-secim" role="group" aria-label="Klima modu">
+          <button class="mod-dugme" type="button" data-mod="sogutma" aria-pressed="false">Soğutma</button>
+          <button class="mod-dugme" type="button" data-mod="isitma" aria-pressed="false">Isıtma</button>
+          <button class="mod-dugme" type="button" data-mod="fan" aria-pressed="false">Fan</button>
+        </div>
+        <div class="hedef-satir" id="klimaHedefSatir">
           <button class="yuvarlak" type="button" id="klimaEksi" aria-label="Klima hedefini düşür">−</button>
           <div class="hedef">
             <div class="kucuk">hedef</div>
@@ -77,6 +82,14 @@
           <button class="yuvarlak" type="button" id="klimaArti" aria-label="Klima hedefini yükselt">+</button>
         </div>
         <div class="kucuk ipucu" id="klimaIpucu" hidden>Hedef yalnızca klima açıkken değişir</div>
+        <div class="fan-satir">
+          <button class="yuvarlak kucuk-yuvarlak" type="button" id="klimaFanEksi" aria-label="Fan hızını düşür">−</button>
+          <div class="hedef">
+            <div class="kucuk">fan hızı</div>
+            <div class="fan-deger" id="klimaFan">--</div>
+          </div>
+          <button class="yuvarlak kucuk-yuvarlak" type="button" id="klimaFanArti" aria-label="Fan hızını yükselt">+</button>
+        </div>
         <button class="ana-dugme" type="button" id="klimaAcKapat">—</button>
       </div>
     </section>

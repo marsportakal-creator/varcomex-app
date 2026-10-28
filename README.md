@@ -19,7 +19,9 @@ Kombiyi ve klimayı telefondan izleyip yönetir. Beyin ile aynı EMQX Serverless
 - **Kombi kartı:** oda sıcaklığı, nem, hedef (−/+ ile 15–28), aç/kapat, durum. Kombi ısıtırken kart turuncu-kırmızı olur (termostattaki ekran gibi).
 - **Klima kartı:**
   - Yapı kombiyle aynı; hedef 16–30.
-  - Hedef yalnızca klima açıkken değişir. Klima soğuturken kart mavi olur.
+  - Mod düğmeleri (Soğutma / Isıtma / Fan; seçili olan vurgulu) ve fan hızı −/+ (Otomatik → Düşük → Orta → Yüksek, uçlarda durur).
+  - Hedef yalnızca klima açıkken değişir; fan modunda hedef gizlenir.
+  - Klima açıkken kart ısıtma modunda turuncu-kırmızı, soğutma modunda mavi olur.
   - Kit veri vermiyorsa "Klima kiti bağlı değil" yazar.
 - **Komutlar:**
   - Düğme kısa süre "gönderiliyor" durumuna geçer.
