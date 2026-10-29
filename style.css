@@ -121,6 +121,11 @@ button.gonderiliyor { opacity: .7; cursor: progress; }
 .fan-satir { display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; gap: 8px; }
 .kucuk-yuvarlak { width: 48px; height: 48px; font-size: 1.5rem; }
 .fan-deger { font-size: 1.3rem; font-weight: 700; }
+.turbo-dugme {
+  width: 100%; min-height: 44px; border-radius: 12px; border: 1px solid var(--cizgi); cursor: pointer;
+  background: var(--zemin); color: var(--yazi); font: inherit; font-weight: 600;
+}
+.turbo-dugme.secili { background: var(--vurgu); color: var(--vurgu-yazi); border-color: var(--vurgu); }
 .bos-mesaj { padding: 26px 8px; text-align: center; color: var(--soluk); font-weight: 600; }
 
 /* ısıtıyor: termostat TFT'si gibi turuncu-kırmızı */
@@ -131,8 +136,10 @@ button.gonderiliyor { opacity: .7; cursor: progress; }
 .kart.isitiyor .rozet, .kart.sogutuyor .rozet { background: rgba(0, 0, 0, .2); color: #fff; }
 .kart.isitiyor .yuvarlak, .kart.sogutuyor .yuvarlak { background: rgba(255, 255, 255, .15); border-color: rgba(255, 255, 255, .35); color: #fff; }
 .kart.isitiyor .ana-dugme, .kart.sogutuyor .ana-dugme { background: #fff; color: #14192a; border: 0; }
-.kart.isitiyor .mod-dugme, .kart.sogutuyor .mod-dugme { background: rgba(255, 255, 255, .15); border-color: rgba(255, 255, 255, .35); color: #fff; }
-.kart.isitiyor .mod-dugme.secili, .kart.sogutuyor .mod-dugme.secili { background: #fff; color: #14192a; border-color: #fff; }
+.kart.isitiyor .mod-dugme, .kart.sogutuyor .mod-dugme,
+.kart.isitiyor .turbo-dugme, .kart.sogutuyor .turbo-dugme { background: rgba(255, 255, 255, .15); border-color: rgba(255, 255, 255, .35); color: #fff; }
+.kart.isitiyor .mod-dugme.secili, .kart.sogutuyor .mod-dugme.secili,
+.kart.isitiyor .turbo-dugme.secili, .kart.sogutuyor .turbo-dugme.secili { background: #fff; color: #14192a; border-color: #fff; }
 
 .pil {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px;

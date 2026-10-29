@@ -4,7 +4,8 @@
  *   varcomex/<id>/durum  (JSON, retained)        varcomex/<id>/online (LWT "1"/"0", retained)
  *   varcomex/<id>/kombi/set  true/false          varcomex/<id>/kombi/hedef 15..28
  *   varcomex/<id>/klima/set  true/false          varcomex/<id>/klima/hedef 16..30
- *   varcomex/<id>/klima/mod  sogutma/isitma/fan  varcomex/<id>/klima/fan   otomatik/dusuk/orta/yuksek
+ *   varcomex/<id>/klima/mod  sogutma/isitma      varcomex/<id>/klima/fan   otomatik/dusuk/orta/yuksek
+ *   varcomex/<id>/klima/turbo true/false (kit 20 dk sonra kendisi kapatır)
  * Arayüzdeki değerler YALNIZCA beyinden gelen durum JSON'uyla değişir (iyimser güncelleme yok).
  */
 'use strict';
@@ -13,10 +14,10 @@ const VARSAYILAN_SUNUCU = 'wss://v01e1d5b.ala.eu-central-1.emqxsl.com:8084/mqtt'
 const DEPO_ANAHTAR = 'varcomex.ayarlar.v1';
 const YANIT_SURESI_MS = 5000;
 const SINIR = { kombi: [15, 28], klima: [16, 30] };
-const KLIMA_MODLAR = ['sogutma', 'isitma', 'fan'];
+const KLIMA_MODLAR = ['sogutma', 'isitma'];
 const FAN_KADEME = ['otomatik', 'dusuk', 'orta', 'yuksek'];
 const FAN_AD = { otomatik: 'Otomatik', dusuk: 'Düşük', orta: 'Orta', yuksek: 'Yüksek' };
-const MOD_AD = { sogutma: 'Soğutma', isitma: 'Isıtma', fan: 'Fan' };
+const MOD_AD = { sogutma: 'Soğutma', isitma: 'Isıtma' };
 
 // ---------- ayarlar (localStorage, try/catch) ----------
 let ayarlar = { sunucu: VARSAYILAN_SUNUCU, kullanici: '', sifre: '', cihaz: '', tema: 'sistem' };
@@ -225,9 +226,17 @@ function klimaFanDegistir(fark, dugme) {
     (d) => d && d.klima && d.klima.fan === yeni, `Fan hızı ${FAN_AD[yeni]}`);
 }
 
+function klimaTurbo(dugme) {
+  const k = durum && durum.klima;
+  if (!k || k.acik !== true) return;
+  const ac = k.turbo !== true;
+  gonder('klima-turbo', dugme, 'klima/turbo', ac ? 'true' : 'false',
+    (d) => d && d.klima && d.klima.turbo === ac, `Turbo ${ac ? 'aç' : 'kapat'}`);
+}
+
 // ---------- çizim ----------
 const KOMBI_DURUM = { isitiyor: 'Isıtıyor', beklemede: 'Beklemede', kapali: 'Kapalı', acik: 'Açık' };
-const KLIMA_DURUM = { sogutuyor: 'Soğutuyor', isitiyor: 'Isıtıyor', fan: 'Fan', bekliyor: 'Beklemede', kapali: 'Kapalı' };
+
 
 function gecenSure(ms) {
   const sn = Math.round((Date.now() - ms) / 1000);
@@ -301,21 +310,18 @@ function klimaCiz() {
     $('klimaDurum').textContent = '—';
     return;
   }
-  // Renk moda göre (klima açıkken): ısıtma turuncu-kırmızı, soğutma mavi. Eski kit mod
-  // bildirmez: o zaman yalnızca soğuturken mavi.
+  // Renk moda göre (klima açıkken): ısıtma turuncu-kırmızı, soğutma mavi
   const modBilinir = KLIMA_MODLAR.includes(k.mod);
   kart.classList.toggle('isitiyor', k.acik === true && k.mod === 'isitma');
-  kart.classList.toggle('sogutuyor', modBilinir ? k.acik === true && k.mod === 'sogutma' : k.durum === 'sogutuyor');
-  $('klimaDurum').textContent = KLIMA_DURUM[k.durum] || 'Bilinmiyor';
+  kart.classList.toggle('sogutuyor', k.acik === true && k.mod === 'sogutma');
+  $('klimaDurum').textContent = k.acik === true ? 'Açık' : 'Kapalı';
   $('klimaOda').textContent = bicim(k.oda, 1);
   $('klimaHedef').textContent = hedefBicim(k.hedef);
 
   const acik = kontrolAcik();
-  const fanModu = k.mod === 'fan';
   const [mn, mx] = SINIR.klima;
   const ayarOlur = acik && k.acik === true && sayiMi(k.hedef);
-  $('klimaHedefSatir').hidden = fanModu;
-  $('klimaIpucu').hidden = k.acik === true || fanModu;
+  $('klimaIpucu').hidden = k.acik === true;
 
   // Mod düğmeleri: seçili olan vurgulu. Klima kapalıyken de seçilebilir (kit saklar, açınca kullanır)
   for (const b of document.querySelectorAll('.mod-dugme')) {
@@ -331,6 +337,15 @@ function klimaCiz() {
     $('klimaFanArti').disabled = !acik || fi < 0 || fi >= FAN_KADEME.length - 1;
   } else {
     $('klimaFanEksi').disabled = $('klimaFanArti').disabled = true;
+  }
+  // Turbo: yalnızca klima açıkken; açıkken kalan dakika yazar
+  const t = $('klimaTurbo');
+  const turboAcik = k.turbo === true;
+  t.classList.toggle('secili', turboAcik);
+  t.setAttribute('aria-pressed', String(turboAcik));
+  if (!bekleyenler.has('klima-turbo')) {
+    t.textContent = turboAcik ? `Turbo açık · ${sayiMi(k.turbo_dk) ? k.turbo_dk : '?'} dk kaldı` : 'Turbo';
+    t.disabled = !acik || k.acik !== true || (k.turbo !== true && k.turbo !== false);
   }
   if (!bekleyenler.has('klima-hedef')) {
     $('klimaEksi').disabled = !ayarOlur || k.hedef <= mn;
@@ -419,6 +434,7 @@ function basla() {
   }
   $('klimaFanEksi').addEventListener('click', (e) => klimaFanDegistir(-1, e.currentTarget));
   $('klimaFanArti').addEventListener('click', (e) => klimaFanDegistir(+1, e.currentTarget));
+  $('klimaTurbo').addEventListener('click', (e) => klimaTurbo(e.currentTarget));
 
   setInterval(ustCiz, 1000);              // "x sn önce" yazısı
   ciz();
