@@ -10,7 +10,12 @@
  */
 'use strict';
 
-const VARSAYILAN_SUNUCU = 'wss://v01e1d5b.ala.eu-central-1.emqxsl.com:8084/mqtt';
+// Broker adresi config.json'dan (beyinle ayni dosya, mqtt_ws_url). Ayarlarda elle girilen adres
+// varsa o kullanilir. config.json'a ulasilamazsa son okunan, o da yoksa bu yedek.
+const YEDEK_SUNUCU = 'wss://v01e1d5b.ala.eu-central-1.emqxsl.com:8084/mqtt';
+const CONFIG_ADRES = 'config.json';
+const CONFIG_DEPO = 'varcomex.config.ws';
+let configSunucu = '';
 const DEPO_ANAHTAR = 'varcomex.ayarlar.v1';
 const YANIT_SURESI_MS = 5000;
 const SINIR = { kombi: [15, 28], klima: [16, 30] };
@@ -20,16 +25,36 @@ const FAN_AD = { otomatik: 'Otomatik', dusuk: 'Düşük', orta: 'Orta', yuksek: 
 const MOD_AD = { sogutma: 'Soğutma', isitma: 'Isıtma' };
 
 // ---------- ayarlar (localStorage, try/catch) ----------
-let ayarlar = { sunucu: VARSAYILAN_SUNUCU, kullanici: '', sifre: '', cihaz: '', tema: 'sistem' };
+let ayarlar = { sunucu: '', kullanici: '', sifre: '', cihaz: '', tema: 'sistem' };
 let depoCalisiyor = true;
 
 function ayarlariOku() {
   try {
     const ham = localStorage.getItem(DEPO_ANAHTAR);
     if (ham) Object.assign(ayarlar, JSON.parse(ham));
+    // Eski surum sunucuyu hep yazardi: varsayilanla ayniysa "elle girilmedi" say (config.json kullanilsin)
+    if (ayarlar.sunucu === YEDEK_SUNUCU) ayarlar.sunucu = '';
+    configSunucu = localStorage.getItem(CONFIG_DEPO) || '';
   } catch (e) {
     depoCalisiyor = false;
   }
+}
+
+// config.json: yalnizca mqtt_ws_url kullanilir; bicimi bozuksa yok sayilir
+async function configOku() {
+  try {
+    const yanit = await fetch(CONFIG_ADRES, { cache: 'no-store' });
+    if (!yanit.ok) return;
+    const c = await yanit.json();
+    if (c && typeof c.mqtt_ws_url === 'string' && /^wss:\/\//i.test(c.mqtt_ws_url) && c.mqtt_ws_url.length < 200) {
+      configSunucu = c.mqtt_ws_url;
+      try { localStorage.setItem(CONFIG_DEPO, configSunucu); } catch (e) { /* depo yok: bu oturumda gecerli */ }
+    }
+  } catch (e) { /* cevrimdisi: son okunan kullanilir */ }
+}
+
+function etkinSunucu() {
+  return ayarlar.sunucu || configSunucu || YEDEK_SUNUCU;
 }
 
 function ayarlariYaz() {
@@ -42,7 +67,7 @@ function ayarlariYaz() {
 }
 
 function ayarTamam() {
-  return ayarlar.sunucu && ayarlar.kullanici && ayarlar.sifre && /^[0-9a-f]{12}$/.test(ayarlar.cihaz);
+  return ayarlar.kullanici && ayarlar.sifre && /^[0-9a-f]{12}$/.test(ayarlar.cihaz);
 }
 
 function temaUygula() {
@@ -90,7 +115,7 @@ function baglan() {
     return;
   }
   const rastgele = Math.random().toString(16).slice(2, 8);
-  istemci = mqtt.connect(ayarlar.sunucu, {
+  istemci = mqtt.connect(etkinSunucu(), {
     username: ayarlar.kullanici,
     password: ayarlar.sifre,
     clientId: `vcx-app-${rastgele}`,
@@ -382,7 +407,8 @@ function ciz() {
 // ---------- ayar ekranı ----------
 function ayarlariAc(zorunlu) {
   const dlg = $('ayarlar');
-  $('aSunucu').value = ayarlar.sunucu || VARSAYILAN_SUNUCU;
+  $('aSunucu').value = ayarlar.sunucu || '';
+  $('aSunucu').placeholder = configSunucu || YEDEK_SUNUCU;
   $('aKullanici').value = ayarlar.kullanici || '';
   $('aSifre').value = ayarlar.sifre || '';
   $('aCihaz').value = ayarlar.cihaz || '';
@@ -397,7 +423,7 @@ function ayarlariKaydet(olay) {
   const sunucu = $('aSunucu').value.trim();
   const cihaz = $('aCihaz').value.trim().toLowerCase();
   const hata = $('ayarHata');
-  if (!/^wss:\/\//i.test(sunucu)) { hata.textContent = 'Sunucu wss:// ile başlamalı (şifreli WebSocket).'; hata.hidden = false; return; }
+  if (sunucu && !/^wss:\/\//i.test(sunucu)) { hata.textContent = 'Sunucu wss:// ile başlamalı (şifreli WebSocket) ya da boş bırakılmalı.'; hata.hidden = false; return; }
   if (!/^[0-9a-f]{12}$/.test(cihaz)) { hata.textContent = 'Cihaz kimliği 12 karakter olmalı (0-9, a-f).'; hata.hidden = false; return; }
   ayarlar = {
     sunucu,
@@ -438,7 +464,7 @@ function basla() {
 
   setInterval(ustCiz, 1000);              // "x sn önce" yazısı
   ciz();
-  baglan();
+  configOku().finally(baglan);            // önce config.json'daki broker adresi (en fazla bir istek)
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* yerel dosyadan açılınca olmaz, sorun değil */ });

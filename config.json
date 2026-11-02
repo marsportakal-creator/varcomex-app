@@ -1,0 +1,8 @@
+{
+  "surum": 1,
+  "mqtt_host": "v01e1d5b.ala.eu-central-1.emqxsl.com",
+  "mqtt_port": 8883,
+  "mqtt_ws_url": "wss://v01e1d5b.ala.eu-central-1.emqxsl.com:8084/mqtt",
+  "ca": "emqx",
+  "ota_manifest_url": "https://marsportakal-creator.github.io/varcomex-app/ota/manifest.json"
+}
