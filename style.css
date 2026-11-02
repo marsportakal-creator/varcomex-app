@@ -141,6 +141,44 @@ button.gonderiliyor { opacity: .7; cursor: progress; }
 .kart.isitiyor .mod-dugme.secili, .kart.sogutuyor .mod-dugme.secili,
 .kart.isitiyor .turbo-dugme.secili, .kart.sogutuyor .turbo-dugme.secili { background: #fff; color: #14192a; border-color: #fff; }
 
+/* ---------- sekmeler ---------- */
+.sekmeler { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.sekmeler button {
+  min-height: 44px; border-radius: 12px; border: 1px solid var(--cizgi); background: var(--kart);
+  color: var(--yazi); font: inherit; font-weight: 600; cursor: pointer;
+}
+.sekmeler button[aria-selected="true"] { background: var(--vurgu); color: var(--vurgu-yazi); border-color: var(--vurgu); }
+.program-satir { padding: 0 4px; }
+
+/* ---------- program ---------- */
+.hafta { display: grid; gap: 6px; margin-top: 8px; }
+.hafta-gun { display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: start; font-size: .9rem; }
+.hafta-gun > strong { padding-top: 3px; }
+.hafta-olaylar { display: flex; flex-wrap: wrap; gap: 4px; }
+.olay { padding: 3px 8px; border-radius: 999px; background: var(--zemin); border: 1px solid var(--cizgi); font-size: .8rem; }
+.olay.pasif { opacity: .45; text-decoration: line-through; }
+.kural-liste { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
+.kural-liste li {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center;
+  padding: 8px 10px; border: 1px solid var(--cizgi); border-radius: 12px; background: var(--zemin);
+}
+.kural-liste li.pasif .kural-metin { opacity: .5; }
+.kural-liste button {
+  min-height: 36px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--cizgi);
+  background: var(--kart); color: var(--yazi); font: inherit; cursor: pointer;
+}
+.satir-etiket { margin-top: 8px; }
+.gunler { border: 0; padding: 0; margin: 0; }
+.gunler legend { font-size: .9rem; color: var(--soluk); margin-bottom: 6px; }
+.gun-dugmeler { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.gun-dugmeler button {
+  min-height: 40px; border-radius: 10px; border: 1px solid var(--cizgi); background: var(--zemin);
+  color: var(--yazi); font: inherit; font-size: .85rem; cursor: pointer; padding: 0;
+}
+.gun-dugmeler button[aria-pressed="true"] { background: var(--vurgu); color: var(--vurgu-yazi); border-color: var(--vurgu); }
+.onay-satir { display: flex; align-items: center; gap: 8px; color: var(--yazi); }
+.onay-satir input { width: auto; min-height: 0; }
+
 .pil {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px;
   font-size: .9rem; color: var(--soluk); padding: 4px 4px 0;

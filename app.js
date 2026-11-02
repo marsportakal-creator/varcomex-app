@@ -127,7 +127,7 @@ function baglan() {
   istemci.on('connect', () => {
     brokerBagli = true;
     $('uyari').hidden = true;
-    istemci.subscribe([kok() + 'durum', kok() + 'online'], { qos: 1 }, (hata) => {
+    istemci.subscribe([kok() + 'durum', kok() + 'online', kok() + 'program/durum'], { qos: 1 }, (hata) => {
       if (hata) uyariGoster('Konulara abone olunamadı: ' + hata.message, 0);
     });
     ciz();
@@ -151,6 +151,9 @@ function mesajGeldi(konu, veri) {
   const metin = veri.toString();
   if (konu === kok() + 'online') {
     beyinOnline = metin.trim() === '1';
+  } else if (konu === kok() + 'program/durum') {
+    programMesaj(metin);
+    return;
   } else if (konu === kok() + 'durum') {
     try {
       durum = JSON.parse(metin);
@@ -402,6 +405,7 @@ function ciz() {
   kombiCiz();
   klimaCiz();
   pilCiz();
+  programCiz();
 }
 
 // ---------- ayar ekranı ----------
@@ -443,6 +447,7 @@ function ayarlariKaydet(olay) {
 function basla() {
   ayarlariOku();
   temaUygula();
+  programBasla();
 
   $('ayarAc').addEventListener('click', () => ayarlariAc(false));
   $('ayarIptal').addEventListener('click', () => $('ayarlar').close());

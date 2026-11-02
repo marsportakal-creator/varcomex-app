@@ -15,6 +15,7 @@
   <!-- MQTT.js (tarayıcı sürümü, sabit sürüm). Service worker bunu önbelleğe almaz. -->
   <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="program.js" defer></script>
 </head>
 <body>
   <header class="ust">
@@ -30,9 +31,15 @@
     <button id="ayarAc" class="ikon-dugme" type="button" aria-label="Ayarlar" title="Ayarlar">⚙</button>
   </header>
 
+  <nav class="sekmeler" role="tablist" aria-label="Görünüm">
+    <button type="button" role="tab" id="sekmeKontrol" aria-selected="true" aria-controls="ana">Kontrol</button>
+    <button type="button" role="tab" id="sekmeProgram" aria-selected="false" aria-controls="programGorunum">Program</button>
+  </nav>
+
   <div id="uyari" class="uyari" role="status" aria-live="polite" hidden></div>
 
-  <main id="ana">
+  <main id="ana" role="tabpanel" aria-labelledby="sekmeKontrol">
+    <div class="program-satir kucuk" id="programSatir" hidden></div>
     <!-- KOMBI -->
     <section class="kart" id="kombiKart" aria-labelledby="kombiBaslik">
       <div class="kart-ust">
@@ -99,6 +106,85 @@
       <div>Termostat pili: <strong id="pilTermostat">--</strong></div>
     </section>
   </main>
+
+  <!-- PROGRAM -->
+  <main id="programGorunum" role="tabpanel" aria-labelledby="sekmeProgram" hidden>
+    <section class="kart">
+      <div class="kart-ust">
+        <h2>Haftalık program</h2>
+        <span class="rozet" id="prgDurum">—</span>
+      </div>
+      <p class="kucuk" id="prgSonraki">Sıradaki: —</p>
+      <button type="button" class="ana-dugme kapat" id="prgDuraklat">Duraklat</button>
+    </section>
+
+    <section class="kart">
+      <h2>Haftalık özet</h2>
+      <div class="hafta" id="prgHafta"></div>
+    </section>
+
+    <section class="kart">
+      <div class="kart-ust">
+        <h2>Kurallar</h2>
+        <span class="kucuk" id="prgAdet">0 / 20</span>
+      </div>
+      <label class="satir-etiket">Konfor sıcaklığı (°C)
+        <input id="prgKonfor" type="number" min="15" max="26" step="1" inputmode="numeric">
+      </label>
+      <ul class="kural-liste" id="prgListe"></ul>
+      <p class="kucuk" id="prgBos">Henüz kural yok.</p>
+      <div class="dugmeler">
+        <button type="button" class="ikincil" id="prgEkle">Kural ekle</button>
+        <button type="button" id="prgKaydet">Kaydet</button>
+      </div>
+      <p class="kucuk" id="prgTaslak" hidden>Kaydedilmemiş değişiklik var.</p>
+    </section>
+  </main>
+
+  <!-- KURAL DUZENLE -->
+  <dialog id="kuralDlg" aria-labelledby="kuralBaslik">
+    <form id="kuralForm" method="dialog">
+      <h2 id="kuralBaslik">Kural</h2>
+      <fieldset class="gunler">
+        <legend>Günler</legend>
+        <div class="gun-dugmeler" id="kGunler"></div>
+      </fieldset>
+      <label>Saat
+        <input id="kSaat" type="time" required step="60">
+      </label>
+      <label>Cihaz
+        <select id="kCihaz"><option value="kombi">Kombi</option><option value="klima">Klima</option></select>
+      </label>
+      <label>Eylem
+        <select id="kEylem"><option value="ac">Aç</option><option value="kapat">Kapat</option></select>
+      </label>
+      <div id="kKombiAlan">
+        <label>Hedef türü
+          <select id="kTur"><option value="sabit">Sabit derece</option><option value="konfor">Konfor + N</option></select>
+        </label>
+        <label id="kSabitEt">Derece (15–28)
+          <input id="kKombiDerece" type="number" min="15" max="28" step="1" inputmode="numeric">
+        </label>
+        <label id="kFarkEt">Konfora göre (−3 … +5, en fazla 26°)
+          <select id="kFark"></select>
+        </label>
+      </div>
+      <div id="kKlimaAlan">
+        <label>Mod
+          <select id="kMod"><option value="sogutma">Soğutma</option><option value="isitma">Isıtma</option></select>
+        </label>
+        <label>Derece (16–30)
+          <input id="kKlimaDerece" type="number" min="16" max="30" step="1" inputmode="numeric">
+        </label>
+      </div>
+      <label class="onay-satir"><input id="kEtkin" type="checkbox" checked> Etkin</label>
+      <p class="kucuk hata" id="kHata" hidden></p>
+      <div class="dugmeler">
+        <button type="button" class="ikincil" id="kIptal">Vazgeç</button>
+        <button type="submit">Tamam</button>
+      </div>
+    </form>
+  </dialog>
 
   <!-- AYARLAR -->
   <dialog id="ayarlar" aria-labelledby="ayarBaslik">
