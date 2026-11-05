@@ -59,6 +59,16 @@ PWA'nın (service worker, ana ekrana ekleme) çalışması için sayfanın **HTT
 
 **Gizlilik:** depoda kullanıcı adı, şifre ya da cihaz kimliği **yok**; yalnızca sunucu adresi var. Depo açık olduğu için başka hiçbir bilgi ekleme.
 
+## Android uygulaması (Varcomex İklim)
+
+`../VarcomexIklim` bu klasörün dosyalarını derlemede APK'ya kopyalar (`index.html`, `style.css`, `app.js`, `program.js`, `manifest.json`, `config.json`, `icons/`). Kaynak tek yerde durur: buradaki bir değişiklik hem Pages'e (iPhone) hem bir sonraki APK'ya gider.
+
+- **Köprü:** Android'de sayfada `window.VarcomexYerel` köprüsü bulunur (`app.js` başındaki taşıma katmanı).
+  - Komutlar `yayinla(altKonu, değer)` ile yerel koda gider. Yerel kod beyin yerel ağdaysa UDP, değilse MQTT kullanır.
+  - Durum `window.vcxYerel.mesaj(altKonu, metin)` ile gelir. Konu adları ve JSON MQTT ile aynıdır.
+- **Köprü yoksa** (iPhone / tarayıcı) bugünkü MQTT.js yolu aynen çalışır.
+- **Android'de:** ⚙ yalnızca tema ayarını gösterir. Bağlantı bilgileri eşleştirmeden gelir; beyin, ses ve eşleştirme ayarları yerel ekrandadır. Service worker kaydedilmez.
+
 ## Bilgisayarda deneme
 
 `file://` ile açınca service worker çalışmaz. Klasörde basit bir sunucu başlat:
