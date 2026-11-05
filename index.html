@@ -190,6 +190,7 @@
   <dialog id="ayarlar" aria-labelledby="ayarBaslik">
     <form id="ayarForm" method="dialog">
       <h2 id="ayarBaslik">Bağlantı ayarları</h2>
+      <fieldset id="mqttAlanlar" class="duz">
       <p class="kucuk">Bilgiler yalnızca bu telefonda (tarayıcı deposunda) saklanır.</p>
       <label>Sunucu (WebSocket TLS) — boş bırakılırsa config.json'daki adres
         <input id="aSunucu" type="url" autocomplete="off" spellcheck="false">
@@ -203,6 +204,8 @@
       <label>Cihaz kimliği (12 karakter, beyin logunda)
         <input id="aCihaz" type="text" required pattern="[0-9a-fA-F]{12}" maxlength="12" autocapitalize="off" spellcheck="false">
       </label>
+      </fieldset>
+      <button type="button" class="ikincil" id="ayarYerel" hidden>Beyin, ses ve eşleştirme ayarları</button>
       <label>Tema
         <select id="aTema">
           <option value="sistem">Sistem</option>

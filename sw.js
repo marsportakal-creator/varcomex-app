@@ -2,7 +2,7 @@
  * Service worker: yalnızca arayüz dosyalarını önbelleğe alır (uygulama çevrimdışı da açılır).
  * MQTT.js (CDN) ve MQTT bağlantısı önbelleğe alınmaz. Dosyalar değişince SURUM'u artır.
  */
-const SURUM = 'varcomex-ui-v5';
+const SURUM = 'varcomex-ui-v6';
 const DOSYALAR = [
   './',
   'index.html',

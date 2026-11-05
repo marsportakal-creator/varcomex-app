@@ -1,5 +1,8 @@
 /*
  * Varcomex İklim - telefon uygulaması (PWA)
+ * Taşıma: Android uygulamasında (com.varcomex.iklim) window.VarcomexYerel köprüsü vardır; komutlar yerel
+ * koda gider (beyin yerel ağdaysa UDP, değilse MQTT), durum oradan gelir. Köprü yoksa (iPhone / tarayıcı)
+ * MQTT.js ile doğrudan broker'a bağlanılır. İki yolda da konu adları ve durum JSON'u aynıdır.
  * Beyin <-> EMQX Serverless (MQTT over WebSocket TLS). Konular IklimKontrol_C3/UZAK_KONTROL.md'deki gibi:
  *   varcomex/<id>/durum  (JSON, retained)        varcomex/<id>/online (LWT "1"/"0", retained)
  *   varcomex/<id>/kombi/set  true/false          varcomex/<id>/kombi/hedef 15..28
@@ -23,6 +26,42 @@ const KLIMA_MODLAR = ['sogutma', 'isitma'];
 const FAN_KADEME = ['otomatik', 'dusuk', 'orta', 'yuksek'];
 const FAN_AD = { otomatik: 'Otomatik', dusuk: 'Düşük', orta: 'Orta', yuksek: 'Yüksek' };
 const MOD_AD = { sogutma: 'Soğutma', isitma: 'Isıtma' };
+
+// ---------- yerel köprü (Android) ----------
+// Köprü (Kotlin @JavascriptInterface): yayinla(altKonu, metin, istekNo), hazir(), ayarlar().
+// Yerel kod window.vcxYerel üzerinden çağırır: mesaj(altKonu, metin), baglanti(bagli, yol), sonuc(istekNo, ok, hata).
+const kopru = (typeof window.VarcomexYerel === 'object' && window.VarcomexYerel) || null;
+let kopruYol = '';                    // 'udp' (yerel ağ) / 'mqtt' (internet) / '' (bağlı değil)
+let kopruIstekNo = 0;
+const kopruGeriCagri = new Map();     // istekNo -> (hataMetni|null) => void
+
+window.vcxYerel = {
+  mesaj(alt, metin) { mesajGeldi(kok() + alt, String(metin)); },
+  baglanti(bagli, yol) {
+    brokerBagli = !!bagli;
+    kopruYol = bagli ? String(yol || '') : '';
+    if (bagli) $('uyari').hidden = true;
+    ciz();
+  },
+  sonuc(no, ok, hata) {
+    const f = kopruGeriCagri.get(no);
+    kopruGeriCagri.delete(no);
+    if (f) f(ok ? null : String(hata || 'gönderilemedi'));
+  },
+};
+
+// Tek yayın yolu: köprü varsa yerel koda, yoksa MQTT.js'e. geriCagri(hataMetni|null)
+function yayinla(alt, metin, geriCagri) {
+  if (kopru) {
+    const no = ++kopruIstekNo;
+    if (geriCagri) kopruGeriCagri.set(no, geriCagri);
+    try { kopru.yayinla(alt, String(metin), no); } catch (e) { kopruGeriCagri.delete(no); if (geriCagri) geriCagri(String(e)); }
+    return;
+  }
+  istemci.publish(kok() + alt, String(metin), { qos: 1, retain: false }, (hata) => {
+    if (geriCagri) geriCagri(hata ? hata.message : null);
+  });
+}
 
 // ---------- ayarlar (localStorage, try/catch) ----------
 let ayarlar = { sunucu: '', kullanici: '', sifre: '', cihaz: '', tema: 'sistem' };
@@ -67,6 +106,7 @@ function ayarlariYaz() {
 }
 
 function ayarTamam() {
+  if (kopru) return true;              // bağlantı bilgileri yerel uygulamada (eşleştirmeden)
   return ayarlar.kullanici && ayarlar.sifre && /^[0-9a-f]{12}$/.test(ayarlar.cihaz);
 }
 
@@ -99,10 +139,15 @@ let durum = null;                // son durum JSON'u
 let sonDurumZamani = 0;          // son durum mesajının geldiği an (ms)
 let durumSayaci = 0;             // her durum mesajında artar
 
-const kok = () => `varcomex/${ayarlar.cihaz}/`;
+const kok = () => (kopru ? 'varcomex/yerel/' : `varcomex/${ayarlar.cihaz}/`);
 
 // ---------- bağlantı ----------
 function baglan() {
+  if (kopru) {                         // yerel kod bağlanır; durum ve bağlantı window.vcxYerel ile gelir
+    ciz();
+    try { kopru.hazir(); } catch (e) { /* yok say */ }
+    return;
+  }
   if (istemci) { try { istemci.end(true); } catch (e) { /* yok say */ } istemci = null; }
   brokerBagli = false;
   beyinOnline = null;
@@ -172,7 +217,7 @@ function mesajGeldi(konu, veri) {
 const bekleyenler = new Map();
 
 function gonder(anahtar, dugme, altKonu, deger, beklenen, aciklama) {
-  if (!istemci || !brokerBagli) { uyariGoster('Sunucuya bağlı değil, komut gönderilmedi.'); return; }
+  if ((!kopru && !istemci) || !brokerBagli) { uyariGoster('Sunucuya bağlı değil, komut gönderilmedi.'); return; }
   if (beyinOnline === false) { uyariGoster('Beyin çevrimdışı, komut gönderilmedi.'); return; }
   if (bekleyenler.has(anahtar)) return;
   const kayit = {
@@ -185,8 +230,8 @@ function gonder(anahtar, dugme, altKonu, deger, beklenen, aciklama) {
   dugme.setAttribute('aria-busy', 'true');
   if (dugme.classList.contains('ana-dugme')) dugme.textContent = 'Gönderiliyor…';
   ciz();
-  istemci.publish(kok() + altKonu, String(deger), { qos: 1, retain: false }, (hata) => {
-    if (hata) { bitir(anahtar); uyariGoster('Komut gönderilemedi: ' + hata.message); }
+  yayinla(altKonu, deger, (hata) => {
+    if (hata) { bitir(anahtar); ciz(); uyariGoster('Komut gönderilemedi: ' + hata); }
   });
 }
 
@@ -280,10 +325,11 @@ function ustCiz() {
   nokta.classList.remove('cevrimici', 'cevrimdisi');
   let yazi;
   if (!ayarTamam()) yazi = 'Ayar gerekli';
-  else if (!brokerBagli) yazi = 'Sunucuya bağlanıyor…';
+  else if (!brokerBagli) yazi = kopru ? 'Beyin aranıyor…' : 'Sunucuya bağlanıyor…';
   else if (beyinOnline === true) { yazi = 'Beyin çevrimiçi'; nokta.classList.add('cevrimici'); }
   else if (beyinOnline === false) { yazi = 'Beyin çevrimdışı'; nokta.classList.add('cevrimdisi'); }
   else yazi = 'Beyin durumu bekleniyor…';
+  if (kopru && brokerBagli && kopruYol) yazi += kopruYol === 'udp' ? ' · yerel ağ' : ' · internet';
   $('beyinYazi').textContent = yazi;
   $('sonGuncelleme').textContent = sonDurumZamani ? 'güncelleme ' + gecenSure(sonDurumZamani) : 'henüz veri yok';
 }
@@ -411,6 +457,10 @@ function ciz() {
 // ---------- ayar ekranı ----------
 function ayarlariAc(zorunlu) {
   const dlg = $('ayarlar');
+  // Android: bağlantı bilgileri eşleştirmeden gelir; burada yalnızca tema, gerisi yerel ayar ekranında
+  $('mqttAlanlar').hidden = $('mqttAlanlar').disabled = !!kopru;
+  $('ayarYerel').hidden = !kopru;
+  $('ayarBaslik').textContent = kopru ? 'Ayarlar' : 'Bağlantı ayarları';
   $('aSunucu').value = ayarlar.sunucu || '';
   $('aSunucu').placeholder = configSunucu || YEDEK_SUNUCU;
   $('aKullanici').value = ayarlar.kullanici || '';
@@ -424,6 +474,13 @@ function ayarlariAc(zorunlu) {
 
 function ayarlariKaydet(olay) {
   olay.preventDefault();
+  if (kopru) {
+    ayarlar.tema = $('aTema').value;
+    ayarlariYaz();
+    temaUygula();
+    $('ayarlar').close();
+    return;
+  }
   const sunucu = $('aSunucu').value.trim();
   const cihaz = $('aCihaz').value.trim().toLowerCase();
   const hata = $('ayarHata');
@@ -451,6 +508,7 @@ function basla() {
 
   $('ayarAc').addEventListener('click', () => ayarlariAc(false));
   $('ayarIptal').addEventListener('click', () => $('ayarlar').close());
+  $('ayarYerel').addEventListener('click', () => { $('ayarlar').close(); try { kopru.ayarlar(); } catch (e) { /* yok say */ } });
   $('ayarForm').addEventListener('submit', ayarlariKaydet);
   $('ayarlar').addEventListener('cancel', (e) => { if (!ayarTamam()) e.preventDefault(); });
 
@@ -469,6 +527,7 @@ function basla() {
 
   setInterval(ustCiz, 1000);              // "x sn önce" yazısı
   ciz();
+  if (kopru) { baglan(); return; }        // Android: dosyalar APK'dan, service worker gerekmez
   configOku().finally(baglan);            // önce config.json'daki broker adresi (en fazla bir istek)
 
   if ('serviceWorker' in navigator) {

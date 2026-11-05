@@ -208,3 +208,11 @@ input, select {
 .hata { color: var(--kotu); }
 
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--vurgu); outline-offset: 2px; }
+
+/* Ayar formunda kenarlıksız grup (Android'de gizlenir) */
+fieldset.duz { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: inherit; }
+fieldset.duz[hidden] { display: none; }
+#ayarYerel {
+  min-height: 44px; padding: 0 16px; border-radius: 12px; cursor: pointer; font: inherit; font-weight: 600;
+  background: transparent; color: var(--yazi); border: 1px solid var(--cizgi);
+}

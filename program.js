@@ -167,7 +167,7 @@ function programMesaj(metin) {
 
 // ---------- kaydet / duraklat ----------
 function programKaydet() {
-  if (!istemci || !brokerBagli) { uyariGoster('Sunucuya bağlı değil, program gönderilmedi.'); return; }
+  if ((!kopru && !istemci) || !brokerBagli) { uyariGoster('Sunucuya bağlı değil, program gönderilmedi.'); return; }
   if (beyinOnline === false) { uyariGoster('Beyin çevrimdışı, program gönderilmedi.'); return; }
   const konfor = parseInt($('prgKonfor').value, 10);
   if (!(konfor >= 15 && konfor <= 26)) { uyariGoster('Konfor sıcaklığı 15–26 olmalı.'); return; }
@@ -185,13 +185,13 @@ function programKaydet() {
       programCiz();
     }, YANIT_SURESI_MS),
   };
-  istemci.publish(kok() + 'program/set', JSON.stringify(yuk), { qos: 1, retain: false }, (hata) => {
-    if (hata) { clearTimeout(prgBekleyen.zamanlayici); prgBekleyen = null; uyariGoster('Gönderilemedi: ' + hata.message); programCiz(); }
+  yayinla('program/set', JSON.stringify(yuk), (hata) => {
+    if (hata && prgBekleyen) { clearTimeout(prgBekleyen.zamanlayici); prgBekleyen = null; uyariGoster('Gönderilemedi: ' + hata); programCiz(); }
   });
 }
 
 function programDuraklatDegistir() {
-  if (!istemci || !brokerBagli || !prgSunucu) return;
+  if ((!kopru && !istemci) || !brokerBagli || !prgSunucu) return;
   const deger = !prgSunucu.duraklat;
   const d = $('prgDuraklat');
   d.disabled = true;
@@ -200,7 +200,9 @@ function programDuraklatDegistir() {
     deger,
     zamanlayici: setTimeout(() => { prgDurBekleyen = null; uyariGoster('Beyinden 5 sn içinde onay gelmedi.'); programCiz(); }, YANIT_SURESI_MS),
   };
-  istemci.publish(kok() + 'program/duraklat', deger ? 'on' : 'off', { qos: 1, retain: false });
+  yayinla('program/duraklat', deger ? 'on' : 'off', (hata) => {
+    if (hata && prgDurBekleyen) { clearTimeout(prgDurBekleyen.zamanlayici); prgDurBekleyen = null; uyariGoster('Gönderilemedi: ' + hata); programCiz(); }
+  });
 }
 
 // ---------- kural düzenleme ----------
