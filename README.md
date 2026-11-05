@@ -69,6 +69,8 @@ PWA'nın (service worker, ana ekrana ekleme) çalışması için sayfanın **HTT
 - **Köprü yoksa** (iPhone / tarayıcı) bugünkü MQTT.js yolu aynen çalışır.
 - **Android'de:** ⚙ yalnızca tema ayarını gösterir. Bağlantı bilgileri eşleştirmeden gelir; beyin, ses ve eşleştirme ayarları yerel ekrandadır. Service worker kaydedilmez.
 
+**İndirme:** APK `android/VarcomexIklim.apk` olarak bu depoda durur (Pages: `…/varcomex-app/android/VarcomexIklim.apk`). Sayfa Android tarayıcıda açılınca üstte "İndir" bandı çıkar. APK'da şifre yoktur: bağlantı bilgileri eşleştirmede beyinden gelir (BOOT düğmesi). Her yeni sürümde dosyanın üzerine yazılır. Dosya ~80 MB, depo her sürümde büyür; ileride GitHub Releases'e taşınmalı.
+
 ## Bilgisayarda deneme
 
 `file://` ile açınca service worker çalışmaz. Klasörde basit bir sunucu başlat:

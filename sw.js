@@ -2,7 +2,7 @@
  * Service worker: yalnızca arayüz dosyalarını önbelleğe alır (uygulama çevrimdışı da açılır).
  * MQTT.js (CDN) ve MQTT bağlantısı önbelleğe alınmaz. Dosyalar değişince SURUM'u artır.
  */
-const SURUM = 'varcomex-ui-v6';
+const SURUM = 'varcomex-ui-v7';
 const DOSYALAR = [
   './',
   'index.html',
@@ -32,6 +32,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (/\.(apk|bin)$/i.test(url.pathname)) return;      // Android uygulaması / firmware önbelleğe girmez
   e.respondWith(
     fetch(e.request)
       .then((yanit) => {

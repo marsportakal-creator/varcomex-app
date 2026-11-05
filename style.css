@@ -216,3 +216,16 @@ fieldset.duz[hidden] { display: none; }
   min-height: 44px; padding: 0 16px; border-radius: 12px; cursor: pointer; font: inherit; font-weight: 600;
   background: transparent; color: var(--yazi); border: 1px solid var(--cizgi);
 }
+
+/* Android tarayıcıda uygulama indirme bandı */
+.android-bant {
+  display: flex; align-items: center; gap: 10px; margin: 8px 12px 0; padding: 10px 12px;
+  border-radius: 14px; background: var(--kart); border: 1px solid var(--cizgi); font-size: .9rem;
+}
+.android-bant[hidden] { display: none; }
+.android-bant span { flex: 1; }
+.android-indir {
+  background: var(--vurgu); color: var(--vurgu-yazi); text-decoration: none; font-weight: 600;
+  padding: 10px 14px; border-radius: 10px; white-space: nowrap;
+}
+.android-kapat { background: transparent; border: 0; color: var(--soluk); font-size: 1.4rem; min-width: 36px; min-height: 36px; cursor: pointer; }

@@ -525,6 +525,17 @@ function basla() {
   $('klimaFanArti').addEventListener('click', (e) => klimaFanDegistir(+1, e.currentTarget));
   $('klimaTurbo').addEventListener('click', (e) => klimaTurbo(e.currentTarget));
 
+  // Android tarayıcıda (uygulama dışında): uygulamayı indirme bandı (kapatılınca bir daha gösterilmez)
+  if (!kopru && /Android/i.test(navigator.userAgent)) {
+    let kapali = false;
+    try { kapali = localStorage.getItem('varcomex.androidBant') === 'kapali'; } catch (e) { /* yok say */ }
+    $('androidBant').hidden = kapali;
+    $('androidKapat').addEventListener('click', () => {
+      $('androidBant').hidden = true;
+      try { localStorage.setItem('varcomex.androidBant', 'kapali'); } catch (e) { /* yok say */ }
+    });
+  }
+
   setInterval(ustCiz, 1000);              // "x sn önce" yazısı
   ciz();
   if (kopru) { baglan(); return; }        // Android: dosyalar APK'dan, service worker gerekmez
