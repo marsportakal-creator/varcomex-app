@@ -142,7 +142,7 @@ button.gonderiliyor { opacity: .7; cursor: progress; }
 .kart.isitiyor .turbo-dugme.secili, .kart.sogutuyor .turbo-dugme.secili { background: #fff; color: #14192a; border-color: #fff; }
 
 /* ---------- sekmeler ---------- */
-.sekmeler { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.sekmeler { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
 .sekmeler button {
   min-height: 44px; border-radius: 12px; border: 1px solid var(--cizgi); background: var(--kart);
   color: var(--yazi); font: inherit; font-weight: 600; cursor: pointer;

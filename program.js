@@ -20,13 +20,17 @@ const kopya = (o) => JSON.parse(JSON.stringify(o));
 const ikiHane = (n) => String(n).padStart(2, '0');
 
 // ---------- sekmeler ----------
-function sekmeSec(program) {
-  $('sekmeKontrol').setAttribute('aria-selected', String(!program));
-  $('sekmeProgram').setAttribute('aria-selected', String(program));
-  $('ana').hidden = program;
-  $('programGorunum').hidden = !program;
-  try { localStorage.setItem('varcomex.sekme', program ? 'program' : 'kontrol'); } catch (e) { /* yok say */ }
+const SEKMELER = { kontrol: ['sekmeKontrol', 'ana'], program: ['sekmeProgram', 'programGorunum'], kurallar: ['sekmeKurallar', 'kuralGorunum'] };
+function sekmeSec(ad) {
+  if (ad === true) ad = 'program';
+  if (ad === false || !SEKMELER[ad]) ad = 'kontrol';
+  for (const [k, [sekme, gorunum]] of Object.entries(SEKMELER)) {
+    $(sekme).setAttribute('aria-selected', String(k === ad));
+    $(gorunum).hidden = k !== ad;
+  }
+  try { localStorage.setItem('varcomex.sekme', ad); } catch (e) { /* yok say */ }
 }
+window.vcxSekme = sekmeSec;          // Android: Ayarlar > Kurallar kısayolu
 
 // ---------- metin ----------
 function kuralHedefMetni(k) {
@@ -36,6 +40,8 @@ function kuralHedefMetni(k) {
       const d = Math.min(prgKonfor + k.fark, 26);
       return ` konfor${k.fark >= 0 ? '+' : '−'}${Math.abs(k.fark)} (${d}°)`;
     }
+    if (k.tur === 'oda') return ` oda${k.fark >= 0 ? '+' : '−'}${Math.abs(k.fark)}`;
+    if (k.tur === 'varsayilan') return ' (kombi aç ayarı)';
     return ` ${k.derece}°`;
   }
   return ` ${k.mod === 'isitma' ? 'ısıtma' : 'soğutma'} ${k.derece}°`;
@@ -163,6 +169,7 @@ function programMesaj(metin) {
     if (Number.isInteger(p.konfor)) prgKonfor = p.konfor;
   }
   programCiz();
+  kurallarMesaj(p);
 }
 
 // ---------- kaydet / duraklat ----------
@@ -217,22 +224,30 @@ function gunDugmeleriKur() {
     b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')));
     kap.append(b);
   });
-  const fark = $('kFark');
+  farkSecenekleri($('kFark'), 'konfor');
+}
+
+function farkSecenekleri(sec, ad) {
+  const v = sec.value;
+  sec.textContent = '';
   for (let n = -3; n <= 5; n++) {
     const o = document.createElement('option');
     o.value = String(n);
-    o.textContent = n === 0 ? 'konfor' : `konfor ${n > 0 ? '+' : '−'}${Math.abs(n)}`;
-    fark.append(o);
+    o.textContent = n === 0 ? ad : `${ad} ${n > 0 ? '+' : '−'}${Math.abs(n)}`;
+    sec.append(o);
   }
+  if (v) sec.value = v;
 }
 
 function kuralAlanlari() {
   const cihaz = $('kCihaz').value, ac = $('kEylem').value === 'ac';
   $('kKombiAlan').hidden = !(ac && cihaz === 'kombi');
   $('kKlimaAlan').hidden = !(ac && cihaz === 'klima');
-  const konfor = $('kTur').value === 'konfor';
-  $('kSabitEt').hidden = konfor;
-  $('kFarkEt').hidden = !konfor;
+  const tur = $('kTur').value;
+  $('kSabitEt').hidden = tur !== 'sabit';
+  $('kFarkEt').hidden = tur !== 'konfor' && tur !== 'oda';
+  $('kFarkYazi').textContent = tur === 'oda' ? 'Çalıştığı andaki oda sıcaklığına göre (−3 … +5)' : 'Konfora göre (−3 … +5, en fazla 26°)';
+  farkSecenekleri($('kFark'), tur === 'oda' ? 'oda' : 'konfor');
 }
 
 function kuralAc(i) {
@@ -245,7 +260,7 @@ function kuralAc(i) {
   $('kCihaz').value = k.cihaz;
   $('kEylem').value = k.eylem;
   $('kTur').value = k.tur || 'sabit';
-  $('kKombiDerece').value = k.cihaz === 'kombi' && k.tur !== 'konfor' && k.derece ? k.derece : 22;
+  $('kKombiDerece').value = k.cihaz === 'kombi' && (k.tur || 'sabit') === 'sabit' && k.derece ? k.derece : 22;
   $('kFark').value = String(k.fark != null ? k.fark : 0);
   $('kMod').value = k.mod || 'sogutma';
   $('kKlimaDerece').value = k.cihaz === 'klima' && k.derece ? k.derece : 24;
@@ -269,7 +284,7 @@ function kuralTamam(olay) {
     if (k.tur === 'sabit') {
       k.derece = parseInt($('kKombiDerece').value, 10);
       if (!(k.derece >= 15 && k.derece <= 28)) return hata('Kombi derecesi 15–28 olmalı.');
-    } else {
+    } else if (k.tur !== 'varsayilan') {
       k.fark = parseInt($('kFark').value, 10);
     }
   } else if (k.eylem === 'ac') {
@@ -286,8 +301,10 @@ function kuralTamam(olay) {
 
 function programBasla() {
   gunDugmeleriKur();
-  $('sekmeKontrol').addEventListener('click', () => sekmeSec(false));
-  $('sekmeProgram').addEventListener('click', () => sekmeSec(true));
+  $('sekmeKontrol').addEventListener('click', () => sekmeSec('kontrol'));
+  $('sekmeProgram').addEventListener('click', () => sekmeSec('program'));
+  $('sekmeKurallar').addEventListener('click', () => sekmeSec('kurallar'));
+  kurallarBasla();
   $('prgEkle').addEventListener('click', () => kuralAc(-1));
   $('prgKaydet').addEventListener('click', programKaydet);
   $('prgDuraklat').addEventListener('click', programDuraklatDegistir);
@@ -302,6 +319,110 @@ function programBasla() {
   $('kIptal').addEventListener('click', () => $('kuralDlg').close());
   let sekme = 'kontrol';
   try { sekme = localStorage.getItem('varcomex.sekme') || 'kontrol'; } catch (e) { /* yok say */ }
-  sekmeSec(sekme === 'program');
+  sekmeSec(sekme);
   programCiz();
+}
+
+// ---------- Kurallar sekmesi (1.2.0) ----------
+let krlBekleyen = null;    // { zamanlayici } program/kural ya da program/set onayı bekleniyor
+
+function kosulMetni(k) {
+  const esik = String(k.esik).replace('.', ',');
+  const kosul = k.kosul === 'ustu' ? 'üstüne çıkarsa' : 'altına düşerse';
+  let eylem = k.eylem === 'ac' ? 'aç' : 'kapat';
+  if (k.eylem === 'ac' && k.hedef === 'sabit') eylem += ` ${k.derece}°`;
+  if (k.eylem === 'ac' && k.hedef === 'oda') eylem += ` (oda${k.fark >= 0 ? '+' : '−'}${Math.abs(k.fark)})`;
+  return `Oda ${esik}° ${kosul} → ${k.cihaz === 'kombi' ? 'kombi' : 'klima'} ${eylem}`;
+}
+
+function kurallarCiz() {
+  const p = prgSunucu;
+  const liste = $('krlListe');
+  liste.textContent = '';
+  const haftalik = (p && p.kurallar) || [];
+  const kosul = (p && p.kosul) || [];
+  const acik = kontrolAcik() && !krlBekleyen;
+  const satir = (metin, etkin, degistir, sil) => {
+    const li = document.createElement('li');
+    if (!etkin) li.className = 'pasif';
+    const m = document.createElement('span');
+    m.className = 'kural-metin';
+    m.textContent = metin + (etkin ? '' : ' (pasif)');
+    const e = document.createElement('button');
+    e.type = 'button'; e.textContent = etkin ? 'Durdur' : 'Etkinleştir'; e.disabled = !acik;
+    e.addEventListener('click', degistir);
+    const s = document.createElement('button');
+    s.type = 'button'; s.textContent = 'Sil'; s.disabled = !acik; s.setAttribute('aria-label', 'Kuralı sil: ' + metin);
+    s.addEventListener('click', () => { if (confirm('Silinsin mi?\n' + metin)) sil(); });
+    li.append(m, e, s);
+    liste.append(li);
+  };
+  haftalik.forEach((k, i) => satir(kuralMetni(k, true), k.etkin !== false,
+    () => haftalikDegistir((l) => { l[i].etkin = l[i].etkin === false; }),
+    () => haftalikDegistir((l) => { l.splice(i, 1); })));
+  kosul.forEach((k) => satir(kosulMetni(k) + (k.kilitli ? ' · tetiklendi' : ''), k.etkin !== false,
+    () => kuralGonder({ etkin: { id: k.id, deger: k.etkin === false } }),
+    () => kuralGonder({ sil: k.id })));
+  $('krlBos').hidden = haftalik.length + kosul.length > 0;
+  $('krlAdet').textContent = p ? `haftalık ${haftalik.length} / ${PRG_MAX} · koşullu ${kosul.length} / 16` : '—';
+  const a = (p && p.ayar) || null;
+  if (a && document.activeElement !== $('krlAcFark') && document.activeElement !== $('krlAcTavan') && !krlBekleyen) {
+    $('krlAcFark').value = String(a.ac_fark);
+    $('krlAcTavan').value = a.ac_tavan;
+  }
+  $('krlAcKaydet').disabled = !acik || !a;
+}
+
+function krlBitir(mesaj) {
+  if (krlBekleyen) { clearTimeout(krlBekleyen.zamanlayici); krlBekleyen = null; }
+  if (mesaj) uyariGoster(mesaj, 4000);
+  kurallarCiz();
+}
+
+function krlBekle() {
+  krlBekleyen = { zamanlayici: setTimeout(() => { krlBekleyen = null; uyariGoster('Beyinden 5 sn içinde onay gelmedi.'); kurallarCiz(); }, YANIT_SURESI_MS) };
+  kurallarCiz();
+}
+
+function kuralGonder(yuk) {
+  if ((!kopru && !istemci) || !brokerBagli) { uyariGoster('Sunucuya bağlı değil.'); return; }
+  krlBekle();
+  yayinla('program/kural', JSON.stringify(yuk), (hata) => {
+    if (hata) { krlBitir(); uyariGoster('Gönderilemedi: ' + hata); }
+  });
+}
+
+// Haftalık liste beyindeki son haliyle değiştirilip tam liste gönderilir (Program sekmesindeki taslak etkilenmez)
+function haftalikDegistir(f) {
+  if (!prgSunucu) return;
+  if (prgKirli) { uyariGoster('Program sekmesinde kaydedilmemiş değişiklik var: önce kaydedin ya da sayfayı yenileyin.', 8000); return; }
+  if ((!kopru && !istemci) || !brokerBagli) { uyariGoster('Sunucuya bağlı değil.'); return; }
+  const l = kopya(prgSunucu.kurallar || []);
+  f(l);
+  const id = Math.random().toString(16).slice(2, 10);
+  krlBekle();
+  krlBekleyen.id = id;
+  yayinla('program/set', JSON.stringify({ id, konfor: prgSunucu.konfor, kurallar: l }), (hata) => {
+    if (hata) { krlBitir(); uyariGoster('Gönderilemedi: ' + hata); }
+  });
+}
+
+function kombiAcKaydet() {
+  const fark = parseInt($('krlAcFark').value, 10);
+  const tavan = parseInt($('krlAcTavan').value, 10);
+  if (!(tavan >= 18 && tavan <= 30)) { uyariGoster('Üst sınır 18–30 olmalı.'); return; }
+  kuralGonder({ ayar: { ac_fark: fark, ac_tavan: tavan } });
+}
+
+function kurallarBasla() {
+  farkSecenekleri($('krlAcFark'), 'oda');
+  $('krlAcKaydet').addEventListener('click', kombiAcKaydet);
+}
+
+// program/durum geldi: bekleyen kural işlemi tamam (program/kural onayı ayrı gelmez; liste yenilenir)
+function kurallarMesaj(p) {
+  if (krlBekleyen && (!krlBekleyen.id || p.id === krlBekleyen.id)) {
+    const ok = !krlBekleyen.id || p.sonuc === 'ok';
+    krlBitir(ok ? 'Kaydedildi (beyin onayladı).' : 'Kaydedilmedi: ' + (p.mesaj || 'beyin reddetti'));
+  } else kurallarCiz();
 }

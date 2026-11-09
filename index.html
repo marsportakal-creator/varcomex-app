@@ -34,6 +34,7 @@
   <nav class="sekmeler" role="tablist" aria-label="Görünüm">
     <button type="button" role="tab" id="sekmeKontrol" aria-selected="true" aria-controls="ana">Kontrol</button>
     <button type="button" role="tab" id="sekmeProgram" aria-selected="false" aria-controls="programGorunum">Program</button>
+    <button type="button" role="tab" id="sekmeKurallar" aria-selected="false" aria-controls="kuralGorunum">Kurallar</button>
   </nav>
 
   <div id="androidBant" class="android-bant" hidden>
@@ -147,6 +148,34 @@
     </section>
   </main>
 
+  <!-- KURALLAR (1.2.0: haftalik + kosullu tek liste, sesli asistanla ayni sira) -->
+  <main id="kuralGorunum" role="tabpanel" aria-labelledby="sekmeKurallar" hidden>
+    <section class="kart">
+      <div class="kart-ust">
+        <h2>Kurallar</h2>
+        <span class="kucuk" id="krlAdet">—</span>
+      </div>
+      <p class="kucuk">Sıra sesli asistanla aynı (“üçüncü kuralı sil”). Yeni kuralı sesle ekleyin: “her gün sabah yedide kombiyi aç”,
+        “oda 19 derecenin altına düşerse kombiyi aç”. Haftalık kuralları Program sekmesinde de düzenleyebilirsiniz.</p>
+      <ol class="kural-liste" id="krlListe"></ol>
+      <p class="kucuk" id="krlBos">Kural yok.</p>
+    </section>
+
+    <section class="kart">
+      <h2>Kombi aç ayarı</h2>
+      <p class="kucuk">“Kombiyi aç” denince (ses, uygulama, program) hedef = oda sıcaklığı + fark, en fazla üst sınır.</p>
+      <label class="satir-etiket">Oda sıcaklığına göre
+        <select id="krlAcFark"></select>
+      </label>
+      <label class="satir-etiket">Üst sınır (°C)
+        <input id="krlAcTavan" type="number" min="18" max="30" step="1" inputmode="numeric">
+      </label>
+      <div class="dugmeler">
+        <button type="button" id="krlAcKaydet">Kaydet</button>
+      </div>
+    </section>
+  </main>
+
   <!-- KURAL DUZENLE -->
   <dialog id="kuralDlg" aria-labelledby="kuralBaslik">
     <form id="kuralForm" method="dialog">
@@ -166,12 +195,12 @@
       </label>
       <div id="kKombiAlan">
         <label>Hedef türü
-          <select id="kTur"><option value="sabit">Sabit derece</option><option value="konfor">Konfor + N</option></select>
+          <select id="kTur"><option value="sabit">Sabit derece</option><option value="konfor">Konfor + N</option><option value="oda">Oda sıcaklığı + N</option><option value="varsayilan">Kombi aç ayarı</option></select>
         </label>
         <label id="kSabitEt">Derece (15–28)
           <input id="kKombiDerece" type="number" min="15" max="28" step="1" inputmode="numeric">
         </label>
-        <label id="kFarkEt">Konfora göre (−3 … +5, en fazla 26°)
+        <label id="kFarkEt"><span id="kFarkYazi">Konfora göre (−3 … +5, en fazla 26°)</span>
           <select id="kFark"></select>
         </label>
       </div>
