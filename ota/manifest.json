@@ -1,6 +1,10 @@
 {
-  "surum": "1.0.14",
-  "url": "https://marsportakal-creator.github.io/varcomex-app/ota/firmware-1.0.14.bin",
-  "sha256": "53430676bc215f205975299c92f06bc714c636d1a1deb3e373a5a255222e38b1",
-  "boyut": 1105456
+  "surum": "1.0.15",
+  "url": "https://marsportakal-creator.github.io/varcomex-app/ota/firmware-1.0.15.bin",
+  "sha256": "b034428e39f0d0541e04c33c787ace2deadfc73a12c2b8c497e75fed1407dc7a",
+  "boyut": 1126160,
+  "ses": {
+    "surum": 1,
+    "url": "https://marsportakal-creator.github.io/varcomex-app/ota/ses/paket.json"
+  }
 }
